@@ -12,10 +12,6 @@ routes.post("/sessions", SessionController.store);
 
 routes.use(authMiddleware);
 
-routes.put("/teste", (req, res) => {
-  console.log(req.userId);
-
-  return res.json();
-});
+routes.put("/users", UserController.update);
 
 export default routes;
