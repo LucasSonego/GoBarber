@@ -1,5 +1,6 @@
 import Appointments from "../models/Appointments";
 import User from "../models/User";
+import File from "../models/File";
 import * as yup from "yup";
 import { startOfHour, parseISO, isBefore } from "date-fns";
 
@@ -66,6 +67,39 @@ class AppointmentController {
     });
 
     return res.json(agendamento);
+  }
+
+  async index(req, res) {
+    const { page = 1 } = req.query;
+
+    const { pageSize = 10 } = req.body;
+
+    const appointments = await Appointments.findAndCountAll({
+      where: {
+        user_id: req.userId,
+        canceled_at: null
+      },
+      order: ["date"],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
+      attributes: ["id", "date"],
+      include: [
+        {
+          model: User,
+          as: "provider",
+          attributes: ["id", "nome"],
+          include: [
+            {
+              model: File,
+              as: "avatar",
+              attributes: ["id", "path", "url"]
+            }
+          ]
+        }
+      ]
+    });
+
+    return res.json(appointments);
   }
 }
 
