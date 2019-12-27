@@ -70,12 +70,18 @@ class AppointmentController {
   }
 
   async index(req, res) {
-    const appointments = await Appointments.findAll({
+    const { page = 1 } = req.query;
+
+    const pageSize = 10;
+
+    const appointments = await Appointments.findAndCountAll({
       where: {
         user_id: req.userId,
         canceled_at: null
       },
       order: ["date"],
+      limit: pageSize,
+      offset: (page - 1) * pageSize,
       attributes: ["id", "date"],
       include: [
         {
