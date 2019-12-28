@@ -1,3 +1,2 @@
 node_modules
-src/config/database.js
-src/config/auth.js
+.env
