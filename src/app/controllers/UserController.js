@@ -3,6 +3,9 @@ import User from "../models/User";
 
 class UserController {
   async store(req, res) {
+    /**
+     *  Validar os dados da requisição
+     */
     const schema = yup.object().shape({
       nome: yup.string().required(),
       email: yup
@@ -21,6 +24,9 @@ class UserController {
       });
     }
 
+    /**
+     *  Verificar se já existe um usuario com o email informado
+     */
     const userExists = await User.findOne({ where: { email: req.body.email } });
     if (userExists) {
       return res.status(400).json({
@@ -28,6 +34,9 @@ class UserController {
       });
     }
 
+    /**
+     *  Criar um novo User e enviar algumas informações uteis na resposta
+     */
     const { id, nome, email, provider } = await User.create(req.body);
     return res.json({
       id,
@@ -38,6 +47,9 @@ class UserController {
   }
 
   async update(req, res) {
+    /**
+     *  Validar os dados da requisição
+     */
     const schema = yup.object().shape({
       nome: yup.string(),
       email: yup.string().email(),
@@ -61,11 +73,14 @@ class UserController {
       });
     }
 
+    //buscar dados do usuario
     const user = await User.findByPk(req.userId);
     let { email, oldPassword } = req.body;
 
+    //verificar se um novo email foi passado na requsição
     if (email) {
       if (email !== user.email) {
+        //verificar se não ha nenhum outro usuario com este email
         const userExists = await User.findOne({ where: { email } });
         if (userExists) {
           return res.status(400).json({
@@ -78,12 +93,14 @@ class UserController {
       email = user.email;
     }
 
+    //verificar se foi passada uma senha antiga e se esta correta
     if (oldPassword && !(await user.checkPassword(oldPassword))) {
       return res.status(401).json({
         error: "Senha antiga incorreta"
       });
     }
 
+    //atualizar o usuario no banco de dados e retornar informaçoes uteis
     const { id, nome, provider } = await user.update(req.body);
 
     return res.json({

@@ -4,6 +4,9 @@ import File from "../models/File";
 
 class ScheduleController {
   async index(req, res) {
+    /**
+     *  Verificar se o usuario é um prestador de serviços
+     */
     const provider = await User.findOne({
       where: {
         id: req.userId,
@@ -17,10 +20,13 @@ class ScheduleController {
       });
     }
 
+    // receber especificaçoes de pagina se houver na requisição
     const { page = 1 } = req.query;
-
     const { pageSize = 10 } = req.body;
 
+    /**
+     *  Buscar todos os agendamentos no banco de dados
+     */
     const appointments = await Appointments.findAndCountAll({
       where: {
         provider_id: req.userId,
