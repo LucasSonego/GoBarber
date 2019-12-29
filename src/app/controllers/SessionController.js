@@ -6,6 +6,9 @@ import authConfig from "../../config/auth";
 
 class SessionController {
   async store(req, res) {
+    /**
+     *  Validar dados da requisição
+     */
     const schema = yup.object().shape({
       email: yup
         .string()
@@ -20,6 +23,9 @@ class SessionController {
       });
     }
 
+    /**
+     *  Verificar se o usuario e senha estão corretos
+     */
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
     if (!user || !(await user.checkPassword(password))) {
@@ -30,6 +36,9 @@ class SessionController {
 
     const { id, nome } = user;
 
+    /**
+     *  Retornar o token e algumas informações uteis
+     */
     return res.json({
       user: {
         id,

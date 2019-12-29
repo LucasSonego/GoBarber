@@ -3,6 +3,9 @@ import User from "../models/User";
 
 class NotificationController {
   async index(req, res) {
+    /**
+     *  Verificar se o usuario é um prestador de serviços
+     */
     const provider = await User.findOne({
       where: {
         id: req.userId,
@@ -16,9 +19,12 @@ class NotificationController {
       });
     }
 
+    /**
+     *  Buscar notificações no banco de dados(mongodb)
+     */
     var { limit: max } = req.body;
     if (!max) {
-      max = 20;
+      max = 20; // limite de notificações por
     }
 
     const notifications = await Notifications.find({
