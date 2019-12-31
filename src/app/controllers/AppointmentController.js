@@ -1,11 +1,12 @@
 import * as yup from "yup";
-import { startOfHour, parseISO, isBefore, format } from "date-fns";
+import { startOfHour, parseISO, isBefore, format, subHours } from "date-fns";
 import pt from "date-fns/locale/pt";
 
 import Appointments from "../models/Appointments";
 import User from "../models/User";
 import File from "../models/File";
 import Notifcation from "../schemas/Notification";
+import Mail from "../../lib/Mail";
 
 class AppointmentController {
   async store(req, res) {
@@ -50,7 +51,9 @@ class AppointmentController {
     /**
      *  Verificar se o cliente se trata de um viajante do tempo
      */
-    const hourStart = startOfHour(parseISO(req.body.date));
+    const { date } = req.body;
+
+    const hourStart = startOfHour(parseISO(date));
 
     if (isBefore(hourStart, new Date())) {
       return res.status(400).json({
@@ -128,6 +131,57 @@ class AppointmentController {
     });
 
     return res.json(appointments);
+  }
+
+  async delete(req, res) {
+    const appointment = await Appointments.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "provider",
+          attributes: ["nome", "email"]
+        }
+      ]
+    });
+
+    /**
+     *  Verificar se o agendamento pertence ao usuario que fez a requisição
+     */
+    if (appointment.user_id !== req.userId) {
+      return res.status(401).json({
+        error: "Você não tem permissão para cancelar este agendamento"
+      });
+    }
+
+    /**
+     *  Verificar se o agendamento já foi cancelado anteriormente
+     */
+    if (appointment.canceled_at) {
+      return res.json(appointment);
+    }
+
+    /**
+     *  Verificar se o cancelamento esta sendo feito com ao menos 2 horas de antecedencia
+     */
+    if (isBefore(subHours(parseISO(appointment.date), 2), new Date())) {
+      return res.status(401).json({
+        error:
+          "O cancelamento de um agendamento deve ser feito com" +
+          " ao menos 2 horas de antecedencia"
+      });
+    }
+
+    appointment.canceled_at = new Date();
+
+    await Mail.sendMail({
+      to: `${appointment.provider.nome} <${appointment.provider.email}>`,
+      subject: "Agendamento cancelado",
+      text: `Um agendamento para ${appointment.date} foi cancelado.`
+    });
+
+    await appointment.save();
+
+    return res.json(appointment);
   }
 }
 
