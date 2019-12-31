@@ -6,6 +6,7 @@ import Appointments from "../models/Appointments";
 import User from "../models/User";
 import File from "../models/File";
 import Notifcation from "../schemas/Notification";
+import Mail from "../../lib/Mail";
 
 class AppointmentController {
   async store(req, res) {
@@ -133,7 +134,15 @@ class AppointmentController {
   }
 
   async delete(req, res) {
-    const appointment = await Appointments.findByPk(req.params.id);
+    const appointment = await Appointments.findByPk(req.params.id, {
+      include: [
+        {
+          model: User,
+          as: "provider",
+          attributes: ["nome", "email"]
+        }
+      ]
+    });
 
     /**
      *  Verificar se o agendamento pertence ao usuario que fez a requisição
@@ -163,6 +172,12 @@ class AppointmentController {
     }
 
     appointment.canceled_at = new Date();
+
+    await Mail.sendMail({
+      to: `${appointment.provider.nome} <${appointment.provider.email}>`,
+      subject: "Agendamento cancelado",
+      text: `Um agendamento para ${appointment.date} foi cancelado.`
+    });
 
     await appointment.save();
 
