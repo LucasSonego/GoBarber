@@ -6,7 +6,8 @@ import {
   setSeconds,
   format,
   isAfter,
-  parseISO
+  parseISO,
+  subHours
 } from "date-fns";
 import { Op } from "sequelize";
 
@@ -60,7 +61,9 @@ class AvailableController {
         value: format(value, "yyyy-MM-dd'T'HH:mm:ssxxx"),
         available:
           isAfter(value, new Date()) &&
-          !appointments.find(a => format(parseISO(a.date), "HH:mm") === time)
+          !appointments.find(
+            a => format(subHours(parseISO(a.date), 3), "HH:mm") === time
+          )
       };
     });
 
