@@ -35,7 +35,7 @@ class ScheduleController {
       order: ["date"],
       limit: pageSize,
       offset: (page - 1) * pageSize,
-      attributes: ["id", "date"],
+      attributes: ["id", "date", "past", "cancelable"],
       include: [
         {
           model: User,
